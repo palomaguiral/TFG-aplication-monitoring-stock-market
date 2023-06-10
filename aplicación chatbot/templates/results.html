@@ -1,0 +1,96 @@
+<!-- results.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Results</title>
+
+    <!-- Add Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+    <!-- chart.js JavaScript library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    <style>
+        /* Add CSS styles to create a green box */
+        .box {
+            border: 1px solid rgb(226, 94, 94);
+            background-color: rgba(227, 136, 126, 0.823);
+            padding: 10px;
+        }
+
+        /* Add custom styles to logo image */
+        #logo {
+        height: 50px;
+        margin-right: 10px;
+        }
+
+        /* Red color */
+        .red {
+            color: rgba(219, 10, 10, 0.633);
+        }
+
+        /* Add custom styles to chart canvas */
+        .chart-canvas {
+            width: 100px;
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-5">
+
+        <div class="text-center mb-4">
+            <img id="logo" src="static/logoIBKR.png" alt="Logo">
+            <h1 class="text-center mb-4 red">Interactive Brokers - Operations with AI</h1>
+        </div>
+
+        <form class="text-center" action="/results" method="get">
+            <div class="form-group">
+                <label for="query">Which BUY or SALE operation do you want to execute?</label>
+                <input type="text" class="form-control" id="query" name="query">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Run</button>
+        </form>
+
+        <div id="entryContainer"></div>
+
+        <p class="text-center mt-5"><em>{{user_query}}</em></p>
+
+        <div class="box mt-5">
+            <h2>Code explanation:</h2>
+            <p>{{code_explanation}}</p>
+        </div>
+
+        <div class="box mt-5">
+            <button type="button" class="btn btn-primary btn-danger show-code-btn">Show code</button>
+            <div class="code-box mt-3 d-none">
+                <h2>Python code:</h2>
+                <pre><code>{{code}}</code></pre>
+            </div>
+        </div>
+        
+
+    </div>
+
+    <!-- Add Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+    <script>
+        // Cuando se haga clic en el botón "Show code"
+        $(".show-code-btn").click(function() {
+          // Muestra el div de código
+          $(".code-box").removeClass("d-none");
+          // Oculta el botón "Mostrar código"
+          $(this).addClass("d-none");
+        });
+
+    </script>
+
+</body>
+</html>
