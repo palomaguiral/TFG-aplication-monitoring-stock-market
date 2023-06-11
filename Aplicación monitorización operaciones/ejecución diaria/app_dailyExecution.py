@@ -98,8 +98,8 @@ import pandas as pd
 
 from get_Portfolio_Names import portfolios_Names_and_ID
 
-from pruebas_AddPosition_ConDetail import add_position
-from pruebas_ClosePosition_ConDetails import close_position
+from AddPosition_ConDetail import add_position
+from ClosePosition_ConDetails import close_position
 
 from existing_positions_Cartera import get_existing_positions
 
@@ -375,8 +375,8 @@ import pandas as pd
 
 from get_Portfolio_Names import portfolios_Names_and_ID
 
-from pruebas_AddPosition_ConDetail import add_position
-from pruebas_ClosePosition_ConDetails import close_position
+from AddPosition_ConDetail import add_position
+from ClosePosition_ConDetails import close_position
 
 from existing_positions_Cartera import get_existing_positions
 
