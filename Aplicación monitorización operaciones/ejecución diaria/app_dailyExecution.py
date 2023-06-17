@@ -584,3 +584,297 @@ driver.implicitly_wait(10)
 ##                                      PASO 2.c - Cargar las operaciones de IBKR a la Cartera 3                                 ##
 ###################################################################################################################################
 ###################################################################################################################################
+print('--------------------------------CARTERA 3-------------------------------------')
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+#from keys import user_investing, password_investing
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import Select
+from datetime import datetime
+import pdfkit
+import os
+import pandas as pd
+import time
+
+
+from get_Portfolio_Names import portfolios_Names_and_ID
+
+from details_positions_information import detail_rows
+
+from existing_positions_Cartera import get_existing_positions
+
+from create_portfolios import crear_cartera_holdings #para crear la cartera 3 de nuevo
+
+from addPositions_toCartera3 import add_position_toCartera3
+
+
+from dotenv import load_dotenv
+import os
+
+
+#Cargar las credenciales de investing.com, que están como variables de entorno
+load_dotenv()
+user_investing = os.getenv('USER_INVESTING')
+print(user_investing)
+password_investing =  os.getenv('PASSWORD_INVESTING')
+
+
+#https://stackoverflow.com/questions/72773206/selenium-python-attributeerror-webdriver-object-has-no-attribute-find-el
+
+
+# Configuración del controlador de Chrome. # Start a web driver to automate the browser actions
+options = webdriver.ChromeOptions()
+options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+driver = webdriver.Chrome(service=Service("selenium/chromedriver/win32/114.0.5735.90/chromedriver.exe"), options=options)
+
+
+                            ################### Inicia sesión ###################
+driver.get("https://www.investing.com/portfolio") #"https://www.investing.com/portfolio/?portfolioID=ZWQzYDRnMmtiNz02ZTc4Mg%3D%3D"
+driver.delete_all_cookies()# Elimina todas las cookies
+email_input = driver.find_element("name", "loginFormUser_email")
+email_input.send_keys(user_investing)
+email_input.send_keys(Keys.RETURN)
+password_input = driver.find_element("id", "loginForm_password")
+password_input.send_keys(password_investing)
+password_input.send_keys(Keys.RETURN)
+
+                                ###########################'My watchlist'###############################
+driver.get("https://www.investing.com/portfolio") #Go to 'import watchlist' page. STEP 1
+
+wait_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "onetrust-consent-sdk")))
+
+# The cookie company, OneTrust, puts an overlay that protects the button and I can't click it. 
+# To fix the error I have to delete from the html of the page the code: '<div id="onetrust-consent-sdk"></div>. 
+element = driver.find_element("id", "onetrust-consent-sdk")# Find the OneTrust consent SDK element
+driver.execute_script("arguments[0].remove();", element)# Delete the element from the DOM using execute_script
+
+
+
+####################################################################################################################################
+########################################1. Scrapear las posiciones type SELL de la Cartera 1############################################
+####################################################################################################################################
+print('------------------Paso 1. Scrapear las posiciones type SELL de la Cartera 1------------------')
+                                            ##########Go to 'CARTERA 1'##########
+
+#Primero hay que sacar el ID de la Cartera1 para poder acceder
+existing_portfolios = portfolios_Names_and_ID(driver=driver) #nombre y ID de los portfolios de tu cuenta de investing.com
+                                                             # ejemplo: [('Cartera 1 - ACTUAL', 'tab_41609486'), ('Cartera 2 - VENDIDAS', 'tab_41639367')]
+print(existing_portfolios)
+
+for tuple in existing_portfolios:
+    name = tuple[0]
+    id = tuple[1]
+    if name == 'Cartera 1':
+        id_cartera1 = id #example: tab_41609486
+#print(id_cartera2)
+
+# Quitar cookies
+wait_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "onetrust-consent-sdk"))) 
+element = driver.find_element("id", "onetrust-consent-sdk")# Find the OneTrust consent SDK element
+driver.execute_script("arguments[0].remove();", element)# Delete the element from the DOM using execute_script
+
+
+#Acceder al portfolio de la Cartera3 --> CLICAR
+cartera_btn = driver.find_element(By.XPATH, f"//ul[@class='ui-sortable portfolioTabs shortList']/li[@id='{id_cartera1}']") #example: id="tab_41609486"
+cartera_btn.click()
+
+driver.implicitly_wait(5)
+
+
+##################################################################################################################################
+#                          Función para scrapear las posiciones type=SELL                                                        #
+
+##############Aplicar la función para sacar las posiciones type SELL de la cartera 1##############
+
+
+time.sleep(5)
+url_cartera1 = driver.current_url
+#print(f'- URL: {url_cartera1}')
+time.sleep(5)
+driver.get(url_cartera1)
+time.sleep(5)
+soup = BeautifulSoup(driver.page_source, "html.parser") #Para hacer el web scraping y sacar los nombres de los activos que tenemos
+#print(soup)
+id_number_cartera1 = 'positionstable_' + id_cartera1[4:] #quitar el principio de 'tab_' para quedarnos solo con los números
+time.sleep(5)
+table_tag = soup.find('table', {'id': id_number_cartera1}) #the table
+    
+
+table_body_tag = table_tag.find('tbody')
+tr_tag_list = table_body_tag .find_all('tr') #each row of the table
+    
+sell_positions_list = [] # Sacamos los nombres de los activos que están en nuestra Cartera1 en este momento
+for tr in tr_tag_list: #for each row, i.e, for each portfolio position
+    d={} #long name: xxx, id: xxx .   Nos guardamos tanto el nombre del activo como el id de la fila, por si necesitamos recuperarlo luegos
+        
+    if tr.get('data-operation') == 'SELL': #Solo añadir a la lista si es de tipo SELL
+        d['longName'] = tr.get('data-fullname') #example: data-fullname="Apple Inc"
+        d['row_id'] = tr.get('id') #example: id="row_symbol_41609486_6408_39154437"
+        #d['type'] =tr.get('data-operation') #example: data_operation="SELL"
+        sell_positions_list.append(d)
+
+lista_sell_positions = sell_positions_list
+
+
+
+
+
+# Quitar cookies
+wait_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "onetrust-consent-sdk"))) 
+element = driver.find_element("id", "onetrust-consent-sdk")# Find the OneTrust consent SDK element
+driver.execute_script("arguments[0].remove();", element)# Delete the element from the DOM using execute_script
+
+##################################################################################################################################
+#                          Función para scrapear las posiciones detalladas type=SELL   
+#                                                      
+#De cada row_id de tipo sell que hemos sacado, sacar las detail rows con su información
+lista_sell_positions_detailed = [] #aquí guardaremos las posiciones detalladas para cada posición
+for diccionario in lista_sell_positions: #(for position in lista_sell_positions)
+    name = diccionario['longName']
+    row_id = diccionario['row_id']
+    print(row_id)
+
+    #Acceder a la posición
+    positon_row_btn = driver.find_element("id", row_id) #Accedemos a la posición del portfolio 'Cartera 1 - ACTUAL' mediante su ID
+    positon_row_btn.click()
+
+    
+    lista_position_detailed=detail_rows(driver=driver, name=name, id_row_position=row_id)
+    lista_sell_positions_detailed.extend(lista_position_detailed)
+print(lista_sell_positions_detailed) #TODAS LAS OPERACIONES DE TYPE SELL DE LA CARTERA1
+#output ejemplo: [{'id_detail_row': 'row_symbol_43097249_252_39920750', 'amount_detail_row': '3', 'price_detail_row': '337.18', 
+#                 'date_detail_row': '06/14/2023', 'active_name': 'Microsoft Corporation'}, {'id_detail_row': 'row_symbol_43097249_252_39893105', 'amount_detail_row': '5', 'price_detail_row': '334.11', 'date_detail_row': '06/13/2023', 'active_name': 'Microsoft Corporation'}]
+
+
+driver.implicitly_wait(5)
+
+
+
+
+
+####################################################################################################################################
+########################################2. Cerrar todas las posiciones que había en la Cartera 3############################################
+####################################################################################################################################
+                                            ##########Go to 'CARTERA 3'##########
+print('------------------Paso 2. Cerrar todas las posiciones que había en la Cartera 3 - Borrar artera 3------------------')
+
+#Primero hay que sacar el ID de la Cartera1 para poder acceder
+existing_portfolios = portfolios_Names_and_ID(driver=driver) #nombre y ID de los portfolios de tu cuenta de investing.com
+                                                             # ejemplo: [('Cartera 1 - ACTUAL', 'tab_41609486'), ('Cartera 2 - VENDIDAS', 'tab_41639367')]
+print(existing_portfolios)
+
+for tuple in existing_portfolios:
+    name = tuple[0]
+    id = tuple[1]
+    if name == 'Cartera 3':
+        id_cartera3 = id #example: tab_41609486
+        print('id cartera3:')
+        print(id_cartera3) 
+
+#print(id_cartera2)
+
+# Quitar cookies
+wait_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "onetrust-consent-sdk"))) 
+element = driver.find_element("id", "onetrust-consent-sdk")# Find the OneTrust consent SDK element
+driver.execute_script("arguments[0].remove();", element)# Delete the element from the DOM using execute_script
+
+
+#Acceder al portfolio de la Cartera3 --> CLICAR
+cartera_btn = driver.find_element(By.XPATH, f"//ul[@class='ui-sortable portfolioTabs shortList']/li[@id='{id_cartera3}']") #example: id="tab_41609486"
+cartera_btn.click()
+
+
+driver.implicitly_wait(1)
+time.sleep(3)
+#Opciones:
+#get_existing_positions(driver=driver, id_cartera=id_cartera3)
+opciones_cartera_btn = driver.find_element(By.XPATH, "//span[@class='threeDotsIcon']")
+opciones_cartera_btn.click()
+
+time.sleep(3)
+
+#Borrar
+#delete_cartera_btn = driver.find_element(By.XPATH, "//a[@class='js-delete-portfolio-button']")
+delete_cartera_btn = opciones_cartera_btn.find_element(By.XPATH, "//a[@class='js-delete-portfolio-button']")
+delete_cartera_btn.click()
+
+time.sleep(1)
+
+
+#Confrimar
+numero_id_cartera3 = id_cartera3[4:] #ejemplo: ·id_cartera3=tab_43286951; numero_id_cartera3=43286951
+confirm_delete_cartera_btn  = driver.find_element(By.XPATH, f"//a[@onclick='javascript:Portfolio.deletePortfolio({numero_id_cartera3});']") 
+confirm_delete_cartera_btn.click()
+
+
+time.sleep(10)
+
+####################################################################################################################################
+########################################        3. Crear Cartera 3 vacía             ############################################
+####################################################################################################################################
+print('------------------Paso 3. Crear Cartera 3 vacía------------------')
+
+crear_cartera_holdings(nombre_cartera='Cartera 3')
+
+
+
+####################################################################################################################################
+########################################4. Añadir las posiciones scrapeadas a la Cartera 3 (con type SELL???)############################################
+####################################################################################################################################
+print('------------------Paso 4. Añadir las posiciones scrapeadas a la Cartera 3 (con type SELL???)------------------')
+
+                                ###################Acceder a la nueva Cartera 3###################
+
+#Primero hay que sacar el ID de la Cartera3 para poder acceder
+existing_portfolios = portfolios_Names_and_ID(driver=driver) #nombre y ID de los portfolios de tu cuenta de investing.com
+                                                             # ejemplo: [('Cartera 1 - ACTUAL', 'tab_41609486'), ('Cartera 2 - VENDIDAS', 'tab_41639367')]
+print(existing_portfolios)
+
+for tuple in existing_portfolios:
+    name = tuple[0]
+    id = tuple[1]
+    if name == 'Cartera 3':
+        id_cartera3 = id #example: tab_41609486
+        print('id cartera3:')
+        print(id_cartera3) 
+
+#print(id_cartera2)
+
+# Quitar cookies
+wait_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "onetrust-consent-sdk"))) 
+element = driver.find_element("id", "onetrust-consent-sdk")# Find the OneTrust consent SDK element
+driver.execute_script("arguments[0].remove();", element)# Delete the element from the DOM using execute_script
+
+
+#Acceder al portfolio de la Cartera3 --> CLICAR
+cartera_btn = driver.find_element(By.XPATH, f"//ul[@class='ui-sortable portfolioTabs shortList']/li[@id='{id_cartera3}']") #example: id="tab_41609486"
+cartera_btn.click()
+
+
+        #########################Insertar las operaciones en corto (extraídas de la cartera1)#########################
+
+#¡¡¡¡Las operaciones type=SELL que hemos extraído de la cartera1 están guardadas en 'lista_sell_positions_detailed'!!!!
+
+#lista_sell_positions_detailed = [{'id_detail_row': 'row_symbol_43097249_252_39920750', 'amount_detail_row': '3', 'price_detail_row': '337.18', 'date_detail_row': '06/14/2023', 'active_name': 'Microsoft Corporation'}, {'id_detail_row': 'row_symbol_43097249_252_39893105', 'amount_detail_row': '5', 'price_detail_row': '334.11', 'date_detail_row': '06/13/2023', 'active_name': 'Microsoft Corporation'}]
+
+for operation in lista_sell_positions_detailed:
+    name = operation['active_name']
+    amount = operation['amount_detail_row']
+    price = operation['price_detail_row']
+    date = operation['date_detail_row']
+
+    
+    add_position_toCartera3(driver=driver, name=name, amount=amount, 
+                            price=price, id_cartera=id_cartera3 , date=date)
+
+
+
+
+# Establecer un tiempo de espera implícito de 10 segundos
+driver.implicitly_wait(10)

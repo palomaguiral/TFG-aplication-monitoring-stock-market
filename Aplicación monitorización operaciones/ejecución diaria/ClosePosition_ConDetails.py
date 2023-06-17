@@ -15,7 +15,7 @@ from datetime import datetime
 
 from selenium.webdriver.common.by import By
 
-from pruebas_AddPosition_ConDetail import add_position
+from AddPosition_ConDetail import add_position
 
 
 #df_operations= pd.read_csv('last7days_operations.csv')
