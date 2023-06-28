@@ -11,8 +11,7 @@ from ibapi.execution import ExecutionFilter
 from datetime import datetime, timedelta
 import time
 
-from my_trades import MyTrades_BuySell_App
-from getISIN import ISINApp
+from dependencies import MyTrades_BuySell_App, ISINApp
 
 ######################################  To get the operations - MyTrades_BuySell_App #########################################
 app = MyTrades_BuySell_App()
@@ -95,7 +94,10 @@ from datetime import datetime
 import pdfkit
 import os
 import pandas as pd
+from dotenv import load_dotenv
+import os
 
+"""
 from get_Portfolio_Names import portfolios_Names_and_ID
 
 from AddPosition_ConDetail import add_position
@@ -104,10 +106,8 @@ from ClosePosition_ConDetails import close_position
 from existing_positions_Cartera import get_existing_positions
 
 from details_positions import detail_rows
-
-from dotenv import load_dotenv
-import os
-
+"""
+from dependencies import add_position, close_position, get_existing_positions, detail_rows
 
 #Cargar las credenciales de investing.com, que están como variables de entorno
 load_dotenv()
@@ -371,8 +371,11 @@ from datetime import datetime
 import pdfkit
 import os
 import pandas as pd
+from dotenv import load_dotenv
+import os
 
 
+"""
 from get_Portfolio_Names import portfolios_Names_and_ID
 
 from AddPosition_ConDetail import add_position
@@ -381,10 +384,10 @@ from ClosePosition_ConDetails import close_position
 from existing_positions_Cartera import get_existing_positions
 
 from details_positions import detail_rows
+"""
 
+from dependencies import portfolios_Names_and_ID, add_position, close_position, get_existing_positions, detail_rows
 
-from dotenv import load_dotenv
-import os
 
 
 #Cargar las credenciales de investing.com, que están como variables de entorno
@@ -600,8 +603,10 @@ import pdfkit
 import os
 import pandas as pd
 import time
+from dotenv import load_dotenv
+import os
 
-
+"""
 from get_Portfolio_Names import portfolios_Names_and_ID
 
 from details_positions_information import detail_rows
@@ -611,10 +616,11 @@ from existing_positions_Cartera import get_existing_positions
 from create_portfolios import crear_cartera_holdings #para crear la cartera 3 de nuevo
 
 from addPositions_toCartera3 import add_position_toCartera3
+"""
+
+from dependencies import portfolios_Names_and_ID, detail_rows, get_existing_positions, crear_cartera_holdings, add_position_toCartera3
 
 
-from dotenv import load_dotenv
-import os
 
 
 #Cargar las credenciales de investing.com, que están como variables de entorno
